@@ -7,7 +7,7 @@ Key files:
 pacman.c - Sokol faithful port of pacman to c95 and sokol gfx (as a reference).
 pacman_asm.txt - Original decompiled z80 code for pacman (as a reference to use when needed to answer questions about behavior)
 pacman_data.asm - The static data in 6502 assembly for the pacman assets, well documented. These will be inserted in our code file.
-pacman_x16_wip.asm - Work in progress for our port.. our code we write will go in sections here.
+pacman_x16.asm - Work in progress for our port.. our code we write will go in sections here.
 Various Commander x16 documentation - As reference for writing our code
 plan.md - This file.. we add to and change this file as we move forward in our project.
 
