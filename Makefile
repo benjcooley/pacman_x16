@@ -5,7 +5,6 @@ CC65 = cl65
 X16EMU = x16emu
 
 # Flags
-CFLAGS = -C cx16-custom.cfg
 EMUFLAGS = -run
 
 # Files
@@ -16,8 +15,8 @@ OUTPUT = pacman.prg
 all: $(OUTPUT)
 
 # Build the program
-$(OUTPUT): $(MAIN_SOURCE) pacman_data.asm cx16-custom.cfg
-	$(CC65) $(CFLAGS) -o $@ $(MAIN_SOURCE)
+$(OUTPUT): $(MAIN_SOURCE)
+	$(CC65) -t cx16 -o $@ $(MAIN_SOURCE)
 
 # Run in the emulator
 run: $(OUTPUT)
