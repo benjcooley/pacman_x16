@@ -9,15 +9,15 @@ CFLAGS = -C cx16-custom.cfg
 EMUFLAGS = -run
 
 # Files
-SOURCES = pacman_x16.asm pacman_data.asm
+MAIN_SOURCE = pacman_x16.asm
 OUTPUT = pacman.prg
 
 # Default target
 all: $(OUTPUT)
 
 # Build the program
-$(OUTPUT): $(SOURCES) cx16-custom.cfg
-	$(CC65) $(CFLAGS) -o $@ $(SOURCES)
+$(OUTPUT): $(MAIN_SOURCE) pacman_data.asm cx16-custom.cfg
+	$(CC65) $(CFLAGS) -o $@ $(MAIN_SOURCE)
 
 # Run in the emulator
 run: $(OUTPUT)
