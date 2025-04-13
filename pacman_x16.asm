@@ -22,7 +22,11 @@
 ; Include the data file with sprite and tile data
 ; .include "pacman_data.asm"
 
-; jump to our entry point
+; Create an infinite loop at the first instruction
+infinite_loop:
+    jmp infinite_loop
+
+; jump to our entry point (never reached)
 jmp start
 
 ;----------------------------------------------------------
