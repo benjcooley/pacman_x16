@@ -56,6 +56,10 @@ title_message:
     .byte "TESTING BUILD PROCESS", cr, cr
     .byte "PRESS RUN/STOP TO EXIT", cr, 0
 
+debug_message:
+    .byte cr, "PROGRAM IS RUNNING - WATCH THE BORDER COLORS", cr
+    .byte "INITIALIZING PACMAN...", cr, cr, 0
+
 exit_message:
     .byte cr, "EXITING PROGRAM", cr, 0
 
@@ -89,12 +93,49 @@ start:
     ldx #0
 print_loop:
     lda title_message,x
-    beq main_loop
+    beq print_done
     jsr chrout
     inx
     bne print_loop
+print_done:
+    ; Print a message to confirm we're running
+    ldx #0
+debug_loop:
+    lda debug_message,x
+    beq main_loop
+    jsr chrout
+    inx
+    bne debug_loop
     
 main_loop:
+    ; Draw a colorful border to show the program is running
+    lda #$01                    ; red color
+    sta $9F34                   ; VERA DC_BORDER
+    
+    ; Wait a bit
+    ldx #$FF
+delay1:
+    ldy #$FF
+delay2:
+    dey
+    bne delay2
+    dex
+    bne delay1
+    
+    ; Change border color
+    lda #$02                    ; green color
+    sta $9F34                   ; VERA DC_BORDER
+    
+    ; Wait a bit
+    ldx #$FF
+delay3:
+    ldy #$FF
+delay4:
+    dey
+    bne delay4
+    dex
+    bne delay3
+    
     jsr stop                    ; check if stop key is pressed
     beq exit                    ; if stop key was pressed (z=1), exit
     jmp main_loop               ; otherwise continue looping
