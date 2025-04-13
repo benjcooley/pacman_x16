@@ -34,8 +34,15 @@ SPRITE_DEST      = $A000            ; VRAM address for sprite/tileset data
 ;----------------------------------------------------------
 ; Data Section
 ;----------------------------------------------------------
+; Include the data file that contains all Pac-Man assets
+.include "pacman_data.asm"
 
-; This entire block is replaced by pacman_data.asm
+; Maze data for testing
+MazeData:
+    .byte 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    .byte 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+MazeData_End:
+MazeDataLen = MazeData_End - MazeData
 
 ;----------------------------------------------------------
 ; Code Section
@@ -59,13 +66,49 @@ ClearZeroPage:
 
     ;------------------------------------------------------
     ; Section 1.1.2: VERA Initialization
-    ; Set VERA's address registers so that subsequent writes go to TILEMAP_BASE.
+    ; Configure VERA for tilemap mode
     ;------------------------------------------------------
+    
+    ; VERA register definitions
+    VERA_CTRL       = $9F25     ; Control register
+    VERA_DC_VIDEO   = $9F29     ; Display Composer video settings
+    VERA_DC_HSCALE  = $9F2A     ; Display Composer horizontal scale
+    VERA_DC_VSCALE  = $9F2B     ; Display Composer vertical scale
+    VERA_L0_CONFIG  = $9F2D     ; Layer 0 configuration
+    VERA_L0_MAPBASE = $9F2E     ; Layer 0 map base address
+    VERA_L0_TILEBASE = $9F2F    ; Layer 0 tile base address
+    
+    ; Configure VERA for 8x8 tiles, 16-color mode
+    LDA #1          ; Reset VERA and set ADDR1 as active
+    STA VERA_CTRL
+    
+    ; Enable display output, set 8bpp mode
+    LDA #%10000001  ; Enable video output + 8bpp mode
+    STA VERA_DC_VIDEO
+    
+    ; Set scaling to 1:1 (no scaling)
+    LDA #64         ; Scale factor 64 = 100%
+    STA VERA_DC_HSCALE
+    STA VERA_DC_VSCALE
+    
+    ; Configure Layer 0 for tilemap mode
+    LDA #%00000010  ; Enable bitmap mode, 8bpp
+    STA VERA_L0_CONFIG
+    
+    ; Set map base address (high byte only, assumes 8K alignment)
+    LDA #(TILEMAP_BASE >> 9)
+    STA VERA_L0_MAPBASE
+    
+    ; Set tile base address (high byte only, assumes 8K alignment)
+    LDA #(SPRITE_DEST >> 9)
+    STA VERA_L0_TILEBASE
+    
+    ; Now set up VERA address for data upload
     LDA #<TILEMAP_BASE           ; Low byte of TILEMAP_BASE
     STA VERA_ADDR_L
-    LDA #>TILEMAP_BASE           ; High byte of TILEMAP_BASE (for our 16-bit address)
+    LDA #>TILEMAP_BASE           ; High byte of TILEMAP_BASE
     STA VERA_ADDR_M
-    LDA #$00                    ; Assume top byte is zero
+    LDA #$10                     ; Auto-increment by 1
     STA VERA_ADDR_H
 
     ;------------------------------------------------------
@@ -79,19 +122,32 @@ ClearZeroPage:
     LDA #$00                    ; Top byte = 0
     STA VERA_ADDR_H
 
-    LDY #$00                    ; Y will serve as our index (0..4095)
+    ; Initialize 16-bit counter for sprite data upload
+    LDX #$00                    ; X = high byte (0..15)
+    LDY #$00                    ; Y = low byte (0..255)
+    
 UploadSpriteLoop:
-    LDA SpriteData, Y           ; Load byte from sprite data
+    LDA rom_tiles, Y            ; Load byte from tile data
     STA VERA_DATA0              ; Write byte to VERA (auto-increment)
-    INY
-    CPY #$00                    ; Compare Y with 4096 (Y wraps at $100 = 256 so need workaround)
-    ; Because 4096 > 256, we cannot compare using a single byte register.
-    ; Instead, we use a two-byte counter by leveraging a label.
-    ; For simplicity, assume our assembler supports the pseudo-operator "SpriteDataLen"
-    ; defined as 4096. If not, you will need to implement a proper 16-bit loop.
-    CPY #4096 mod 256           ; (This is conceptual; adjust for your assembler)
-    BNE UploadSpriteLoop
-    ; In a real implementation, you would use a 16-bit counter here.
+    INY                         ; Increment low byte
+    BNE UploadSpriteLoop        ; If Y didn't wrap, continue
+    
+    ; Y wrapped from 255->0, so increment high byte
+    INX
+    CPX #$10                    ; Check if we've uploaded all 4096 bytes (16 * 256)
+    BEQ DoneUploadingSprites    ; If X = 16, we're done
+    
+    ; Adjust pointer to next 256-byte page and continue
+    TXA
+    CLC
+    ADC #>rom_tiles             ; Add high byte of rom_tiles base address
+    STA UploadSpriteLoop+2      ; Self-modify the LDA instruction above
+    JMP UploadSpriteLoop
+    
+DoneUploadingSprites:
+    ; Restore original instruction
+    LDA #>rom_tiles
+    STA UploadSpriteLoop+2
 
     ;------------------------------------------------------
     ; Section 1.3: Maze Tilemap Drawing Routine
