@@ -36,19 +36,19 @@ CLEAR_SCREEN     = $93              ; Clear screen code
 ;----------------------------------------------------------
 ; Message data
 HelloMessage:
-    .byte "HELLO WORLD - PAC-MAN X16 PORT", CR, CR
-    .byte "WELCOME TO THE COMMANDER X16!", CR, CR
-    .byte "PRESS RUN/STOP TO EXIT", CR, 0
+    .byte "HELLO WORLD - PAC-MAN X16 PORT", $0D, $0D
+    .byte "WELCOME TO THE COMMANDER X16!", $0D, $0D
+    .byte "PRESS RUN/STOP TO EXIT", $0D, 0
 
 ExitMessage:
-    .byte CR, "EXITING PROGRAM", CR, 0
+    .byte $0D, "EXITING PROGRAM", $0D, 0
 
 ;----------------------------------------------------------
 ; Main Program
 ;----------------------------------------------------------
 Start:
     ; Clear the screen
-    LDA #CLEAR_SCREEN
+    LDA #$93
     JSR CHROUT
     
     ; Print the hello message
