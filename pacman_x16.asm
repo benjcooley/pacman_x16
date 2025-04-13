@@ -94,18 +94,17 @@ ClearZeroPage:
     ; VERA Initialization
     ;
     ; The VERA (Versatile Embedded Retro Adapter) is the graphics chip
-    ; of the Commander X16. We configure it for bitmap mode to match
-    ; the original Pac-Man arcade hardware as closely as possible.
+    ; of the Commander X16. We'll configure it for text mode first to
+    ; ensure we can see our debug output.
     ;------------------------------------------------------
     
-    ; Reset VERA and set ADDR1 as active
-    LDA #1
+    ; Reset VERA and set ADDR0 as active
+    LDA #0
     STA VERA_CTRL
     
-    ; Enable display output, set 8bpp mode (256 colors)
+    ; Enable display output in standard text mode
     ; Bit 7: Enable video output
-    ; Bit 0: Set 8bpp mode (vs 4bpp)
-    LDA #%10000001
+    LDA #%10000000
     STA VERA_DC_VIDEO
     
     ; Set scaling to 1:1 (no scaling)
@@ -114,19 +113,14 @@ ClearZeroPage:
     STA VERA_DC_HSCALE
     STA VERA_DC_VSCALE
     
-    ; Configure Layer 0 for bitmap mode
-    ; Bit 1: Enable bitmap mode (vs tile mode)
-    ; Bit 0: Set 8bpp mode (vs 4bpp)
-    LDA #%00000010
+    ; Configure Layer 0 for tile mode (text mode)
+    ; Bit 5: Enable layer
+    ; Bit 0-1: Color depth (0 = 1bpp, 1 = 2bpp, 2 = 4bpp, 3 = 8bpp)
+    LDA #%00100001  ; Enable layer, 2bpp color depth
     STA VERA_L0_CONFIG
     
-    ; Set map base address (high byte only, assumes 8K alignment)
-    LDA #(TILEMAP_BASE >> 9)
-    STA VERA_L0_MAPBASE
-    
-    ; Set tile base address (high byte only, assumes 8K alignment)
-    LDA #(SPRITE_DEST >> 9)
-    STA VERA_L0_TILEBASE
+    ; We don't need to set map base or tile base as the KERNAL
+    ; has already set these up for text mode
     
     ; Now set up VERA address for data upload
     LDA #<TILEMAP_BASE           ; Low byte of TILEMAP_BASE
@@ -197,6 +191,10 @@ DrawMazeLoop:
     ; Section 2: Print Hello World and Idle Loop
     ;------------------------------------------------------
     
+    ; Clear the screen first
+    LDA #147                    ; Clear screen code
+    JSR $FFD2                   ; Call CHROUT
+    
     ; Print "HELLO WORLD" to the screen
     LDX #0                      ; Initialize index
 PrintLoop:
@@ -204,12 +202,17 @@ PrintLoop:
     BEQ IdleLoop                ; If we hit the null terminator, exit loop
     JSR $FFD2                   ; Call CHROUT (KERNAL routine to print a character)
     INX                         ; Increment index
-    JMP PrintLoop               ; Continue loop
+    BNE PrintLoop               ; Continue loop (branch if X != 0)
     
 IdleLoop:
     JMP IdleLoop                ; Infinite loop
 
 HelloMessage:
-    .byte "HELLO WORLD", 13, 0  ; Message with carriage return and null terminator
+    .byte "HELLO WORLD - PAC-MAN X16 PORT", 13, 13
+    .byte "INITIALIZING SYSTEM...", 13, 13
+    .byte "VERA INITIALIZED", 13
+    .byte "SPRITE DATA UPLOADED", 13
+    .byte "MAZE DATA DRAWN", 13, 13
+    .byte "READY FOR GAME DEVELOPMENT!", 13, 0
 
                 .end
