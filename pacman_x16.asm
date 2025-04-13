@@ -26,6 +26,13 @@ VERA_ADDR_L      = $9F20            ; VERA Address low byte
 VERA_ADDR_M      = $9F21            ; VERA Address middle byte
 VERA_ADDR_H      = $9F22            ; VERA Address high byte
 VERA_DATA0       = $9F23            ; VERA data port (sequential write)
+VERA_CTRL        = $9F25            ; Control register
+VERA_DC_VIDEO    = $9F29            ; Display Composer video settings
+VERA_DC_HSCALE   = $9F2A            ; Display Composer horizontal scale
+VERA_DC_VSCALE   = $9F2B            ; Display Composer vertical scale
+VERA_L0_CONFIG   = $9F2D            ; Layer 0 configuration
+VERA_L0_MAPBASE  = $9F2E            ; Layer 0 map base address
+VERA_L0_TILEBASE = $9F2F            ; Layer 0 tile base address
 
 ; Destination addresses in VRAM:
 TILEMAP_BASE     = $B000            ; VRAM address for tilemap
@@ -69,14 +76,7 @@ ClearZeroPage:
     ; Configure VERA for tilemap mode
     ;------------------------------------------------------
     
-    ; VERA register definitions
-    VERA_CTRL       = $9F25     ; Control register
-    VERA_DC_VIDEO   = $9F29     ; Display Composer video settings
-    VERA_DC_HSCALE  = $9F2A     ; Display Composer horizontal scale
-    VERA_DC_VSCALE  = $9F2B     ; Display Composer vertical scale
-    VERA_L0_CONFIG  = $9F2D     ; Layer 0 configuration
-    VERA_L0_MAPBASE = $9F2E     ; Layer 0 map base address
-    VERA_L0_TILEBASE = $9F2F    ; Layer 0 tile base address
+    ; Configure VERA
     
     ; Configure VERA for 8x8 tiles, 16-color mode
     LDA #1          ; Reset VERA and set ADDR1 as active
@@ -122,32 +122,27 @@ ClearZeroPage:
     LDA #$00                    ; Top byte = 0
     STA VERA_ADDR_H
 
-    ; Initialize 16-bit counter for sprite data upload
-    LDX #$00                    ; X = high byte (0..15)
-    LDY #$00                    ; Y = low byte (0..255)
+    ; Initialize for sprite data upload
+    LDX #$00                    ; X = high byte counter (0..15)
+    LDY #$00                    ; Y = low byte counter (0..255)
+    
+    ; Set up pointer to rom_tiles
+    LDA #<rom_tiles
+    STA $00                     ; Store low byte at zero page $00
+    LDA #>rom_tiles
+    STA $01                     ; Store high byte at zero page $01
     
 UploadSpriteLoop:
-    LDA rom_tiles, Y            ; Load byte from tile data
+    LDA ($00),Y                 ; Load byte from tile data using indirect addressing
     STA VERA_DATA0              ; Write byte to VERA (auto-increment)
     INY                         ; Increment low byte
     BNE UploadSpriteLoop        ; If Y didn't wrap, continue
     
-    ; Y wrapped from 255->0, so increment high byte
-    INX
+    ; Y wrapped from 255->0, so increment high byte of our pointer
+    INC $01                     ; Increment high byte of pointer
+    INX                         ; Increment our counter
     CPX #$10                    ; Check if we've uploaded all 4096 bytes (16 * 256)
-    BEQ DoneUploadingSprites    ; If X = 16, we're done
-    
-    ; Adjust pointer to next 256-byte page and continue
-    TXA
-    CLC
-    ADC #>rom_tiles             ; Add high byte of rom_tiles base address
-    STA UploadSpriteLoop+2      ; Self-modify the LDA instruction above
-    JMP UploadSpriteLoop
-    
-DoneUploadingSprites:
-    ; Restore original instruction
-    LDA #>rom_tiles
-    STA UploadSpriteLoop+2
+    BNE UploadSpriteLoop        ; If not done, continue
 
     ;------------------------------------------------------
     ; Section 1.3: Maze Tilemap Drawing Routine
