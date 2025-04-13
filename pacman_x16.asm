@@ -1,13 +1,11 @@
 ;***************************************************************************
-; x16 hello world (6502 assembly)
+; X16 PAC-MAN (6502 Assembly)
 ;
-; A simple program that:
-;   - Clears the screen
-;   - Prints "HELLO WORLD" message
-;   - Waits for RUN/STOP key to exit
+; A faithful recreation of Pac-Man for the Commander X16
+; Based on the original arcade game and pacman.c reference
 ;
 ; Author: [Your Name]
-; Date: 2025-04-12
+; Date: 2025-04-13
 ;***************************************************************************
 
 ; BASIC header that runs SYS 2061 ($080D)
@@ -20,6 +18,9 @@
 .segment "INIT"
 .segment "ONCE"
 .segment "CODE"
+
+; Include the data file with sprite and tile data
+; .include "pacman_data.asm"
 
 ; jump to our entry point
 jmp start
@@ -35,13 +36,24 @@ stop             = $ffe1            ; check if stop key is pressed
 cr               = $0d              ; carriage return
 clear_screen     = $93              ; clear screen code
 
+; VERA registers
+VERA_ADDR_L      = $9F20            ; VERA Address low byte
+VERA_ADDR_M      = $9F21            ; VERA Address middle byte
+VERA_ADDR_H      = $9F22            ; VERA Address high byte
+VERA_DATA0       = $9F23            ; VERA data port 0
+VERA_DATA1       = $9F24            ; VERA data port 1
+VERA_CTRL        = $9F25            ; VERA control register
+VERA_DC_VIDEO    = $9F29            ; VERA display composer video register
+VERA_DC_HSCALE   = $9F2A            ; VERA display composer horizontal scale
+VERA_DC_VSCALE   = $9F2B            ; VERA display composer vertical scale
+
 ;----------------------------------------------------------
 ; data section
 ;----------------------------------------------------------
 ; message data
-hello_message:
-    .byte "HELLO WORLD!", cr, cr
-    .byte "COMMANDER X16 ASSEMBLY DEMO", cr, cr
+title_message:
+    .byte "PAC-MAN FOR COMMANDER X16", cr, cr
+    .byte "TESTING BUILD PROCESS", cr, cr
     .byte "PRESS RUN/STOP TO EXIT", cr, 0
 
 exit_message:
@@ -57,26 +69,26 @@ start:
     lda #clear_screen
     jsr chrout
     
-    ; set text color to white
-    lda #$05                    ; petscii white
+    ; set text color to yellow
+    lda #$07                    ; petscii yellow
     jsr chrout
     
     ; set border and background colors
     lda #$00                    ; black
     sta $9F34                   ; VERA DC_BORDER
     lda #$01                    ; blue
-    sta $9F20                   ; VERA ADDR_L
+    sta VERA_ADDR_L
     lda #$00
-    sta $9F21                   ; VERA ADDR_M
+    sta VERA_ADDR_M
     lda #$11                    ; auto-increment by 1
-    sta $9F22                   ; VERA ADDR_H
+    sta VERA_ADDR_H
     
     cli                         ; enable interrupts
     
-    ; print the hello message
+    ; print the title message
     ldx #0
 print_loop:
-    lda hello_message,x
+    lda title_message,x
     beq main_loop
     jsr chrout
     inx
