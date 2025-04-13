@@ -212,19 +212,19 @@ IdleLoop:
 Exit:
     LDA #13                     ; Carriage return
     JSR $FFD2                   ; Print it
-    LDA #"E"
+    LDA #69                     ; ASCII 'E'
     JSR $FFD2
-    LDA #"X"
+    LDA #88                     ; ASCII 'X'
     JSR $FFD2
-    LDA #"I"
+    LDA #73                     ; ASCII 'I'
     JSR $FFD2
-    LDA #"T"
+    LDA #84                     ; ASCII 'T'
     JSR $FFD2
-    LDA #"I"
+    LDA #73                     ; ASCII 'I'
     JSR $FFD2
-    LDA #"N"
+    LDA #78                     ; ASCII 'N'
     JSR $FFD2
-    LDA #"G"
+    LDA #71                     ; ASCII 'G'
     JSR $FFD2
     RTS                         ; Return to BASIC
 
