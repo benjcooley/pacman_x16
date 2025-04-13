@@ -8,9 +8,12 @@
 ;   - Draws a dummy maze tilemap into VRAM at TILEMAP_BASE
 ;   - Enters an infinite idle loop
 ;
-; Sprite data is embedded as literal data (4K in size).
+; The implementation follows the original Pac-Man arcade hardware as closely
+; as possible while adapting to the Commander X16's architecture and the
+; VERA graphics chip capabilities.
 ;
 ; Author: [Your Name]
+; Date: 2025-04-12
 ;***************************************************************************
 
 .segment "LOADADDR"
@@ -87,23 +90,34 @@ ClearZeroPage:
     ; Configure VERA for tilemap mode
     ;------------------------------------------------------
     
-    ; Configure VERA
+    ;------------------------------------------------------
+    ; VERA Initialization
+    ;
+    ; The VERA (Versatile Embedded Retro Adapter) is the graphics chip
+    ; of the Commander X16. We configure it for bitmap mode to match
+    ; the original Pac-Man arcade hardware as closely as possible.
+    ;------------------------------------------------------
     
-    ; Configure VERA for 8x8 tiles, 16-color mode
-    LDA #1          ; Reset VERA and set ADDR1 as active
+    ; Reset VERA and set ADDR1 as active
+    LDA #1
     STA VERA_CTRL
     
-    ; Enable display output, set 8bpp mode
-    LDA #%10000001  ; Enable video output + 8bpp mode
+    ; Enable display output, set 8bpp mode (256 colors)
+    ; Bit 7: Enable video output
+    ; Bit 0: Set 8bpp mode (vs 4bpp)
+    LDA #%10000001
     STA VERA_DC_VIDEO
     
     ; Set scaling to 1:1 (no scaling)
-    LDA #64         ; Scale factor 64 = 100%
+    ; Value 64 = 100% scale (no scaling)
+    LDA #64
     STA VERA_DC_HSCALE
     STA VERA_DC_VSCALE
     
-    ; Configure Layer 0 for tilemap mode
-    LDA #%00000010  ; Enable bitmap mode, 8bpp
+    ; Configure Layer 0 for bitmap mode
+    ; Bit 1: Enable bitmap mode (vs tile mode)
+    ; Bit 0: Set 8bpp mode (vs 4bpp)
+    LDA #%00000010
     STA VERA_L0_CONFIG
     
     ; Set map base address (high byte only, assumes 8K alignment)
@@ -124,13 +138,18 @@ ClearZeroPage:
 
     ;------------------------------------------------------
     ; Section 1.2: Sprite/Tileset Data Upload
-    ; Set VERA address to SPRITE_DEST and copy the 4K sprite data.
+    ;
+    ; This section uploads the 4KB of sprite/tileset data to VRAM.
+    ; The original Pac-Man arcade used 256 8x8 character tiles.
+    ; We're uploading these to the VERA VRAM at address SPRITE_DEST.
     ;------------------------------------------------------
-    LDA #<SPRITE_DEST           ; Set low byte of SPRITE_DEST
+    
+    ; Set VERA address to SPRITE_DEST ($A000 in VRAM)
+    LDA #<SPRITE_DEST           ; Low byte of SPRITE_DEST
     STA VERA_ADDR_L
-    LDA #>SPRITE_DEST           ; Set high byte of SPRITE_DEST
+    LDA #>SPRITE_DEST           ; High byte of SPRITE_DEST
     STA VERA_ADDR_M
-    LDA #$00                    ; Top byte = 0
+    LDA #$00                    ; Auto-increment by 1, no address high bits
     STA VERA_ADDR_H
 
     ; Initialize for sprite data upload
