@@ -194,9 +194,22 @@ DrawMazeLoop:
     BNE DrawMazeLoop
 
     ;------------------------------------------------------
-    ; Section 2: Main Entry Point and Idle Loop
+    ; Section 2: Print Hello World and Idle Loop
     ;------------------------------------------------------
+    
+    ; Print "HELLO WORLD" to the screen
+    LDX #0                      ; Initialize index
+PrintLoop:
+    LDA HelloMessage, X         ; Load character from message
+    BEQ IdleLoop                ; If we hit the null terminator, exit loop
+    JSR $FFD2                   ; Call CHROUT (KERNAL routine to print a character)
+    INX                         ; Increment index
+    JMP PrintLoop               ; Continue loop
+    
 IdleLoop:
     JMP IdleLoop                ; Infinite loop
+
+HelloMessage:
+    .byte "HELLO WORLD", 13, 0  ; Message with carriage return and null terminator
 
                 .end
