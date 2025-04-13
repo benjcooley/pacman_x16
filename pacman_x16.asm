@@ -13,7 +13,18 @@
 ; Author: [Your Name]
 ;***************************************************************************
 
-                .org $1000         ; Program code begins at address $1000
+.segment "LOADADDR"
+    .word $0801
+
+.segment "EXEHDR"
+    .word $080B            ; pointer to next line
+    .word 2023             ; line number
+    .byte $9E              ; SYS token
+    .byte "2061"           ; $080D (2061 in decimal)
+    .byte 0                ; end of line
+    .word 0                ; end of BASIC program
+
+.segment "CODE"
 
 ;----------------------------------------------------------
 ; Define Memory Macros and Constants (based on X16 docs)
