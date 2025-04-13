@@ -170,5 +170,3 @@ IdleLoop:
     JMP IdleLoop                ; Infinite loop
 
                 .end
-
-  .fill 4096, 1, $55
