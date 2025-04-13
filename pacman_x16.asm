@@ -68,7 +68,7 @@ ClearZeroPage:
     LDA #$00
     STA $0000, Y
     INY
-    CPY #ZERO_PAGE_SIZE
+    CPY #0
     BNE ClearZeroPage
 
     ;------------------------------------------------------

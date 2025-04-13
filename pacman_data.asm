@@ -602,10 +602,10 @@ rom_wavetable_End:
 rom_wavetable_len = rom_wavetable_End - rom_wavetable
 
 ; Sound Dump Prelude: 490 32-bit values (1960 bytes). Each dword encodes 3 audio voice values.
-Format:
-  Bits 31-28: Volume (4 bits)
-  Bits 27-25: Waveform (3 bits)
-  Bits 24-0 : Frequency (25 bits)
+; Format:
+;   Bits 31-28: Volume (4 bits)
+;   Bits 27-25: Waveform (3 bits)
+;   Bits 24-0 : Frequency (25 bits)
 ;------------------------------------------------------------------------------
 ; Sound Dump: Prelude (snd_dump_prelude)
 ; Format: 490 x 32-bit values
