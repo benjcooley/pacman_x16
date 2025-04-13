@@ -12,6 +12,13 @@
 
 ; program starts at $080D
 .org $080D
+.segment "STARTUP"
+.segment "INIT"
+.segment "ONCE"
+.segment "CODE"
+
+; jump to our entry point
+jmp start
 
 ;----------------------------------------------------------
 ; define memory macros and constants
@@ -39,9 +46,17 @@ exit_message:
 ; main program
 ;----------------------------------------------------------
 start:
+    sei                         ; disable interrupts during initialization
+    
     ; clear the screen
     lda #clear_screen
     jsr chrout
+    
+    ; set text color to white
+    lda #$05                    ; petscii white
+    jsr chrout
+    
+    cli                         ; enable interrupts
     
     ; print the hello message
     ldx #0
