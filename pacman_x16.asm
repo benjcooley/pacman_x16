@@ -205,7 +205,28 @@ PrintLoop:
     BNE PrintLoop               ; Continue loop (branch if X != 0)
     
 IdleLoop:
-    JMP IdleLoop                ; Infinite loop
+    JSR $FFE1                   ; Call STOP routine to check if STOP key (RUN/STOP) is pressed
+    BEQ Exit                    ; If STOP key was pressed (Z=1), exit
+    JMP IdleLoop                ; Otherwise continue looping
+
+Exit:
+    LDA #13                     ; Carriage return
+    JSR $FFD2                   ; Print it
+    LDA #"E"
+    JSR $FFD2
+    LDA #"X"
+    JSR $FFD2
+    LDA #"I"
+    JSR $FFD2
+    LDA #"T"
+    JSR $FFD2
+    LDA #"I"
+    JSR $FFD2
+    LDA #"N"
+    JSR $FFD2
+    LDA #"G"
+    JSR $FFD2
+    RTS                         ; Return to BASIC
 
 HelloMessage:
     .byte "HELLO WORLD - PAC-MAN X16 PORT", 13, 13
