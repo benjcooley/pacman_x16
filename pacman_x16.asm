@@ -25,6 +25,7 @@
 ;----------------------------------------------------------
 ; KERNAL routines
 CHROUT           = $FFD2            ; Output character to current device
+STROUT           = $FF5A            ; Output null-terminated string (pointed to by A/Y)
 STOP             = $FFE1            ; Check if STOP key is pressed
 
 ; ASCII/PETSCII values
@@ -51,14 +52,10 @@ Start:
     LDA #$93
     JSR CHROUT
     
-    ; Print the hello message
-    LDX #0
-PrintLoop:
-    LDA HelloMessage,X
-    BEQ MainLoop
-    JSR CHROUT
-    INX
-    BNE PrintLoop
+    ; Print the hello message using STROUT
+    LDA #<HelloMessage          ; Low byte of message address
+    LDY #>HelloMessage          ; High byte of message address
+    JSR STROUT                  ; Call string output routine
     
 MainLoop:
     JSR STOP                    ; Check if STOP key is pressed
@@ -66,14 +63,10 @@ MainLoop:
     JMP MainLoop                ; Otherwise continue looping
 
 Exit:
-    ; Print exit message
-    LDX #0
-ExitLoop:
-    LDA ExitMessage,X
-    BEQ Done
-    JSR CHROUT
-    INX
-    BNE ExitLoop
+    ; Print exit message using STROUT
+    LDA #<ExitMessage           ; Low byte of message address
+    LDY #>ExitMessage           ; High byte of message address
+    JSR STROUT                  ; Call string output routine
     
 Done:
     RTS                         ; Return to BASIC
