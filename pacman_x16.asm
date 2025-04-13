@@ -1,79 +1,71 @@
 ;***************************************************************************
-; X16 PAC-MAN STAGE ONE (6502 Assembly)
+; x16 hello world (6502 assembly)
 ;
-; This file is a 100% faithful recreation of Stage One of our port:
-;   - Clears zero page
-;   - Initializes VERA for tilemap mode
-;   - Uploads sprite (tileset) data (4K) into VRAM at SPRITE_DEST
-;   - Draws a dummy maze tilemap into VRAM at TILEMAP_BASE
-;   - Enters an infinite idle loop
-;
-; The implementation follows the original Pac-Man arcade hardware as closely
-; as possible while adapting to the Commander X16's architecture and the
-; VERA graphics chip capabilities.
+; A simple program that:
+;   - Clears the screen
+;   - Prints "HELLO WORLD" message
+;   - Waits for RUN/STOP key to exit
 ;
 ; Author: [Your Name]
 ; Date: 2025-04-12
 ;***************************************************************************
 
-; BASIC header that runs SYS 2061 ($080D)
-.org $0801
-    .byte $0B,$08,$01,$00,$9E,$32,$30,$36,$31,$00,$00,$00
+; program starts at $080D
+.org $080D
 
 ;----------------------------------------------------------
-; Define Memory Macros and Constants (based on X16 docs)
+; define memory macros and constants
 ;----------------------------------------------------------
-; KERNAL routines
-CHROUT           = $FFD2            ; Output character to current device
-STOP             = $FFE1            ; Check if STOP key is pressed
+; kernal routines
+chrout           = $ffd2            ; output character to current device
+stop             = $ffe1            ; check if stop key is pressed
 
-; ASCII/PETSCII values
-CR               = $0D              ; Carriage return
-CLEAR_SCREEN     = $93              ; Clear screen code
-
-;----------------------------------------------------------
-; Data Section
-;----------------------------------------------------------
-; Message data
-HelloMessage:
-    .byte "HELLO WORLD - PAC-MAN X16 PORT", $0D, $0D
-    .byte "WELCOME TO THE COMMANDER X16!", $0D, $0D
-    .byte "PRESS RUN/STOP TO EXIT", $0D, 0
-
-ExitMessage:
-    .byte $0D, "EXITING PROGRAM", $0D, 0
+; petscii values
+cr               = $0d              ; carriage return
+clear_screen     = $93              ; clear screen code
 
 ;----------------------------------------------------------
-; Main Program
+; data section
 ;----------------------------------------------------------
-Start:
-    ; Clear the screen
-    LDA #$93
-    JSR CHROUT
+; message data
+hello_message:
+    .byte "hello world", cr, cr
+    .byte "press run/stop to exit", cr, 0
+
+exit_message:
+    .byte cr, "exiting program", cr, 0
+
+;----------------------------------------------------------
+; main program
+;----------------------------------------------------------
+start:
+    ; clear the screen
+    lda #clear_screen
+    jsr chrout
     
-    ; Print the hello message
-    LDX #0
-PrintLoop:
-    LDA HelloMessage,X
-    BEQ MainLoop
-    JSR CHROUT
-    INX
-    BNE PrintLoop
+    ; print the hello message
+    ldx #0
+print_loop:
+    lda hello_message,x
+    beq main_loop
+    jsr chrout
+    inx
+    bne print_loop
     
-MainLoop:
-    JSR STOP                    ; Check if STOP key is pressed
-    BEQ Exit                    ; If STOP key was pressed (Z=1), exit
-    JMP MainLoop                ; Otherwise continue looping
+main_loop:
+    jsr stop                    ; check if stop key is pressed
+    beq exit                    ; if stop key was pressed (z=1), exit
+    jmp main_loop               ; otherwise continue looping
 
-Exit:
-    ; Print exit message
-    LDX #0
-ExitLoop:
-    LDA ExitMessage,X
-    BEQ Done
-    JSR CHROUT
-    INX
-    BNE ExitLoop
+exit:
+    ; print exit message
+    ldx #0
+exit_loop:
+    lda exit_message,x
+    beq done
+    jsr chrout
+    inx
+    bne exit_loop
     
-Done:
-    RTS                         ; Return to BASIC
+done:
+    rts                         ; return to basic
