@@ -53,9 +53,6 @@ exit_message:
 start:
     sei                         ; disable interrupts during initialization
     
-    ; Intentionally crash by jumping to an invalid address
-    jmp $FFFF                   ; This will cause a crash
-    
     ; clear the screen
     lda #clear_screen
     jsr chrout
