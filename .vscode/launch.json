@@ -16,14 +16,23 @@
         },
         {
             "name": "Debug Pac-Man",
-            "type": "shell",
+            "type": "cppdbg",
             "request": "launch",
-            "command": "make debug",
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
+            "program": "${workspaceFolder}/pacman.prg",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "make debug",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
         },
         {
             "name": "Clean & Build Pac-Man",
