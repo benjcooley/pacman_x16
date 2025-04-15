@@ -12,8 +12,7 @@
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
-            },
-            "problemMatcher": []
+            }
         },
         {
             "name": "Debug Pac-Man",
@@ -24,8 +23,7 @@
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
-            },
-            "problemMatcher": []
+            }
         },
         {
             "name": "Clean & Build Pac-Man",
@@ -36,8 +34,7 @@
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
-            },
-            "problemMatcher": []
+            }
         }
     ]
 }
