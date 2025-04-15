@@ -1,5 +1,43 @@
 {
     "configurations": [
-    
+        {
+            "name": "Build & Run Pac-Man",
+            "type": "shell",
+            "request": "launch",
+            "command": "make run",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "name": "Debug Pac-Man",
+            "type": "shell",
+            "request": "launch",
+            "command": "make debug",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "name": "Clean & Build Pac-Man",
+            "type": "shell",
+            "request": "launch",
+            "command": "make clean && make",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
     ]
 }
