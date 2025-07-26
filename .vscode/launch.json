@@ -2,7 +2,7 @@
     "configurations": [
         {
             "name": "Build & Run Pac-Man",
-            "type": "shell",
+            "type": "cppdbg", // Ensure the C++ Debugger extension is installed and enabled
             "request": "launch",
             "command": "make run",
             "group": {
@@ -12,8 +12,27 @@
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
-            },
-            "problemMatcher": []
+            }
+        },
+        {
+            "name": "Debug Pac-Man",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/pacman.prg",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "make debug",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
         },
         {
             "name": "Clean & Build Pac-Man",
@@ -24,20 +43,7 @@
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "name": "Build Only",
-            "type": "shell",
-            "request": "launch",
-            "command": "make",
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
+            }
         }
     ]
 }

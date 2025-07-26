@@ -1,1 +1,64 @@
+# Aider files
 .aider*
+
+# Build directories
+/bin
+build/
+emulator/build/
+
+# Compiled object files and binaries
+*.o
+*.prg
+*.bin
+
+# Assembly listing files
+*.lst
+
+# Development logs and screenshots
+dev_logs/
+dev_screenshots/
+*.log
+*_log_*.txt
+emulator_debug.log
+emulator_log.txt
+mcp_server.log
+test_logging_output.txt
+
+# Temporary screenshots and recordings (but keep legitimate .png files)
+*.gif
+current_x16_screenshot.png
+manual_test_*.png
+*_screenshot*.png
+*_recording*.gif
+*_run_*.gif
+test_*_screenshot*.png
+*_scaled*.png
+*_scaled*.gif
+
+# Development and execution logs
+development_log.txt
+enhanced_development_log.json
+enhanced_development_log.txt
+execution_log.json
+execution_summary.txt
+comparison_report.json
+comparison_report.txt
+
+# macOS files
+.DS_Store
+
+# VSCode settings (keep launch.json but ignore settings.json)
+.vscode/settings.json
+
+# Temporary files
+init
+cx16-custom.cfg
+
+# Emulator logs and temporary files
+emulator/debug_output.log
+emulator/emulator_debug.log
+emulator/emulator_log.txt
+emulator/mcp_server.log
+emulator/test_logging_output.txt
+emulator/test_*.gif
+emulator/logs/

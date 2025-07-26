@@ -1,0 +1,3 @@
+[submodule "emulator"]
+	path = emulator
+	url = https://github.com/benjcooley/x16-emulator_mcp.git
