@@ -11,7 +11,11 @@
     "13": "Pacman: Filling UI area with # (cols 28-39)",
     "14": "Pacman: Screen layout test complete",
     "15": "Pacman: VERA register %1 set to %2",
-    "16": "Pacman: Writing tile %1 at position %3"
+    "16": "Pacman: Writing tile %1 at position %3",
+    "17": "Pacman: Initializing 4bpp palette mode",
+    "18": "Pacman: Setting up custom Pacman palette",
+    "19": "Pacman: Creating sample tile graphics",
+    "20": "Pacman: 4bpp palette test complete"
   },
   "warning": {
     "1": "Low memory warning: %1 bytes remaining",

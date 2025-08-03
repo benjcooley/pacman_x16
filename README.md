@@ -1,5 +1,7 @@
 # X16 Game Development Framework
 
+**🤖 AI ASSISTANTS: READ [`AI_DEVELOPMENT_GUIDE.md`](AI_DEVELOPMENT_GUIDE.md) FIRST! 🤖**
+
 A comprehensive framework for creating authentic retro games on the Commander X16, featuring automated development tools and reusable components.
 
 ## Project Overview

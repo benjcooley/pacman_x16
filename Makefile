@@ -18,7 +18,7 @@ GAME ?= pacman
 CC65 = cl65
 CA65 = ca65
 LD65 = ld65
-EMULATOR = x16emu
+EMULATOR = bin/x16emu
 
 # Build flags
 CFLAGS = -t cx16 -O -Cl
@@ -30,6 +30,7 @@ GAME_DIR = games/$(GAME)
 FRAMEWORK_DIR = framework
 BUILD_DIR = build
 TOOLS_DIR = tools
+BIN_DIR = bin
 
 # Source files
 GAME_MAIN = $(GAME_DIR)/$(GAME)_x16.asm
@@ -57,6 +58,10 @@ $(PROGRAM): $(BUILD_DIR) $(OBJECTS)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
+# Create bin directory
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
 # Compile game main file
 $(BUILD_DIR)/$(GAME)_x16.o: $(GAME_MAIN) $(FRAMEWORK_CORE)
 	$(CA65) $(AFLAGS) -I $(FRAMEWORK_DIR) -o $@ $<
@@ -71,10 +76,20 @@ $(BUILD_DIR)/$(GAME)_data.o: $(GAME_DATA)
 
 # Build and run the game
 run: $(PROGRAM)
+	@if [ ! -f "$(EMULATOR)" ]; then \
+		echo "❌ Emulator not found at $(EMULATOR)"; \
+		echo "💡 Run 'make emulator' first to build the emulator to bin/"; \
+		exit 1; \
+	fi
 	$(EMULATOR) -prg $(PROGRAM) -run
 
 # Build and run with GIF recording for LLM analysis
 run-gif: $(PROGRAM)
+	@if [ ! -f "$(EMULATOR)" ]; then \
+		echo "❌ Emulator not found at $(EMULATOR)"; \
+		echo "💡 Run 'make emulator' first to build the emulator to bin/"; \
+		exit 1; \
+	fi
 	@echo "🎬 Running $(GAME) with GIF recording..."
 	@GIF_FILE="$(GAME)_recording_$$(date +%Y%m%d_%H%M%S).gif"; \
 	echo "📁 Recording to: $$GIF_FILE"; \
@@ -103,6 +118,11 @@ clean:
 	rm -f *.prg
 	rm -f *.o
 
+# Clean everything including emulator
+clean-all: clean
+	rm -rf $(BIN_DIR)
+	$(MAKE) -C emulator clean
+
 # Build framework components (syntax check)
 framework: $(BUILD_DIR)
 	@echo "Building framework components..."
@@ -128,6 +148,37 @@ new:
 	touch games/$(GAME)/$(GAME)_data.asm
 	echo "# $(GAME) for Commander X16" > games/$(GAME)/README.md
 	echo "Game '$(GAME)' created successfully in games/$(GAME)/"
+
+# ==============================================================================
+# EMULATOR BUILD
+# ==============================================================================
+
+# Build emulator and MCP server to bin directory
+emulator: $(BIN_DIR)
+	@echo "Building emulator and MCP server to bin directory..."
+	$(MAKE) -C emulator
+	cp emulator/x16emu $(BIN_DIR)/
+	cp emulator/mcp $(BIN_DIR)/
+	cp emulator/rom.bin $(BIN_DIR)/
+	cp emulator/makecart $(BIN_DIR)/
+	cp logging.def $(BIN_DIR)/
+	mkdir -p $(BIN_DIR)/screenshots
+	@echo "Emulator and MCP server built to $(BIN_DIR)/"
+	@echo "Files copied: x16emu, mcp, rom.bin, makecart, logging.def"
+
+# Force rebuild of emulator
+rebuild-emulator: $(BIN_DIR)
+	@echo "Rebuilding emulator and MCP server..."
+	$(MAKE) -C emulator clean
+	$(MAKE) -C emulator
+	cp emulator/x16emu $(BIN_DIR)/
+	cp emulator/mcp $(BIN_DIR)/
+	cp emulator/rom.bin $(BIN_DIR)/
+	cp emulator/makecart $(BIN_DIR)/
+	cp logging.def $(BIN_DIR)/
+	mkdir -p $(BIN_DIR)/screenshots
+	@echo "Emulator and MCP server rebuilt to $(BIN_DIR)/"
+	@echo "Files copied: x16emu, mcp, rom.bin, makecart, logging.def"
 
 # ==============================================================================
 # DEVELOPMENT TOOLS
@@ -174,6 +225,11 @@ help:
 	@echo "  make GAME=name          - Build specific game"
 	@echo "  make run                - Build and run current game"
 	@echo "  make clean              - Clean build files"
+	@echo "  make clean-all          - Clean everything including emulator"
+	@echo ""
+	@echo "Emulator:"
+	@echo "  make emulator           - Build emulator to bin directory"
+	@echo "  make rebuild-emulator   - Force rebuild emulator"
 	@echo ""
 	@echo "Framework:"
 	@echo "  make framework          - Build framework components"
@@ -191,6 +247,8 @@ help:
 	@echo "Current Settings:"
 	@echo "  GAME = $(GAME)"
 	@echo "  BUILD_DIR = $(BUILD_DIR)"
+	@echo "  BIN_DIR = $(BIN_DIR)"
+	@echo "  EMULATOR = $(EMULATOR)"
 
 # ==============================================================================
 # DEPENDENCIES

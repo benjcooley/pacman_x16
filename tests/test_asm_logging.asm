@@ -3,8 +3,8 @@
 
 .org $0801
 
-; BASIC stub: 10 SYS 2064
-.byte $0c, $08, $0a, $00, $9e, $20, $32, $30, $36, $34, $00, $00, $00
+; BASIC stub: 10 SYS 2060
+.byte $0c, $08, $0a, $00, $9e, $20, $32, $30, $36, $30, $00, $00, $00
 
 ; Assembly logging memory addresses
 ASM_LOG_PARAM1     = $9F60
