@@ -23,7 +23,7 @@ EMULATOR = bin/x16emu
 # Build flags
 CFLAGS = -t cx16 -O -Cl
 AFLAGS = -t cx16
-LDFLAGS = -C cx16-custom.cfg
+LDFLAGS = -C tests/simple.cfg
 
 # Directories
 GAME_DIR = games/$(GAME)
@@ -38,7 +38,7 @@ GAME_DATA = $(GAME_DIR)/$(GAME)_data.asm
 FRAMEWORK_CORE = $(FRAMEWORK_DIR)/core/x16_system.asm $(FRAMEWORK_DIR)/core/vera_graphics.asm
 
 # Output files
-PROGRAM = $(GAME).prg
+PROGRAM = $(BIN_DIR)/$(GAME).prg
 OBJECTS = $(BUILD_DIR)/$(GAME)_x16.o $(BUILD_DIR)/$(GAME)_data.o
 
 # ==============================================================================
@@ -51,7 +51,7 @@ OBJECTS = $(BUILD_DIR)/$(GAME)_x16.o $(BUILD_DIR)/$(GAME)_data.o
 all: $(PROGRAM)
 
 # Build the game program
-$(PROGRAM): $(BUILD_DIR) $(OBJECTS)
+$(PROGRAM): $(BUILD_DIR) $(BIN_DIR) $(OBJECTS)
 	$(LD65) $(LDFLAGS) -o $@ $(OBJECTS)
 
 # Create build directory
@@ -80,6 +80,16 @@ run: $(PROGRAM)
 		echo "❌ Emulator not found at $(EMULATOR)"; \
 		echo "💡 Run 'make emulator' first to build the emulator to bin/"; \
 		exit 1; \
+	fi
+	@# Copy game-specific logging file if it exists
+	@if [ -f "$(GAME_DIR)/$(GAME)log.def" ]; then \
+		cp "$(GAME_DIR)/$(GAME)log.def" "$(BIN_DIR)/$(GAME)log.def"; \
+		echo "📋 Using game-specific logging: $(GAME_DIR)/$(GAME)log.def"; \
+		echo "   → Copied to: $(BIN_DIR)/$(GAME)log.def"; \
+		echo "   → Emulator will auto-detect this file based on $(PROGRAM)"; \
+	else \
+		echo "📋 No game-specific logging found at $(GAME_DIR)/$(GAME)log.def"; \
+		echo "   → Emulator will fall back to generic logging.def"; \
 	fi
 	$(EMULATOR) -prg $(PROGRAM) -run
 
@@ -165,6 +175,14 @@ emulator: $(BIN_DIR)
 	mkdir -p $(BIN_DIR)/screenshots
 	@echo "Emulator and MCP server built to $(BIN_DIR)/"
 	@echo "Files copied: x16emu, mcp, rom.bin, makecart, logging.def"
+
+# Build only MCP binary and copy to bin directory
+.PHONY: mcp
+mcp: $(BIN_DIR)
+	@echo "Building only MCP binary and copying to $(BIN_DIR)/..."
+	$(MAKE) -C emulator mcp
+	cp emulator/mcp $(BIN_DIR)/
+	@echo "MCP binary copied to $(BIN_DIR)/mcp"
 
 # Force rebuild of emulator
 rebuild-emulator: $(BIN_DIR)

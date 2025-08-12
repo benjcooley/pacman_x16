@@ -127,6 +127,9 @@ VRAM_TILEMAP     = $1B000  ; Tilemap data (varies)
 VRAM_TILES       = $10000  ; Tile graphics data (varies)
 VRAM_SPRITE_DATA = $14000  ; Sprite graphics data (varies)
 
+; Reserved sprite tile indices for runtime-generated assets
+SPRITE_DIGIT_BASE_TILE = 128 ; 10 tiles reserved for popup digits (after 32x 16x16 sprites)
+
 ; ==============================================================================
 ; KEYBOARD SCANCODES
 ; ==============================================================================

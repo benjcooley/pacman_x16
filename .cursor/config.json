@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "x16-emulator": {
+      "command": "/Users/benjamincooley/projects/pacman_x16/bin/mcp",
+      "args": [],
+      "env": {
+        "X16_PORT": "9090",
+        "X16_LOG_LEVEL": "INFO",
+        "X16_DEBUG": "0"
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
