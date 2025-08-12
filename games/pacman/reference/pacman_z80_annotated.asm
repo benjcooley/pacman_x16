@@ -12023,54 +12023,7 @@ Pass 1 of 1
 32fd  3032      dw      #3230		; "20" - 20,000 points
 32ff  0000      dw      #0000		; No extra life (free play mode)
 
-; ======================================================
-; LARGE DATA SECTION (3301-3ae1)
-; ======================================================
-; NOTE: The original disassembly from 3301 to 3ae1 appears to contain
-; large data tables or graphics data that was incorrectly disassembled
-; as Z80 instructions. This section likely contains:
-; - Sprite graphics data
-; - Character pattern data  
-; - Sound effect data
-; - Lookup tables for game logic
-; - Level/maze layout data
-;
-; MEMORY_MAP: Mixed data tables (approximate size: ~1750 bytes)
-; 3301-3ae1: Various game data tables (mis-disassembled in original)
 
-; ======================================================
-; STACK DATA FOR MAIN GAME INITIALIZATION
-; ======================================================
-; MEMORY_MAP: Stack-based initialization data
-; This data is used by the main game initialization routine
-3ae0  04        db      #04		; Initialization parameter
-3ae1  00        db      #00		; Initialization parameter
-3ae2  02        db      #02		; Stack data (referenced at 3253)
-3ae3  40        db      #40		; Stack data
-
-; ======================================================
-; SYSTEM INITIALIZATION ROUTINE (3af4)
-; ======================================================
-; ALGORITHM: Main system initialization called from startup
-; This function was called at 32dc during system startup
-; C_PSEUDOCODE:
-;   initialize_lookup_tables();
-;   setup_memory_mapping();
-;   configure_game_parameters();
-3af4  013e3d    ld      bc,#3d3e	; BC = initialization parameters
-3af7  114f3a    ld      de,#3a4f	; DE = data table pointer
-3afa  3614      ld      (hl),#14	; Write initialization value
-3afc  1a        ld      a,(de)		; Read from data table
-3afd  a7        and     a		; Test if zero (end of table)
-3afe  c8        ret     z		; Return if end of table reached
-
-; ALGORITHM: Process initialization data
-3aff  13        inc     de		; Move to next table entry
-3b00  85        add     a,l		; Add table value to L
-3b01  6f        ld      l,a		; Store result back in L
-3b02  d2fa3a    jp      nc,#3afa	; Continue if no carry
-3b05  24        inc     h		; Increment H if carry occurred
-3b06  18f2      jr      #3afa           ; Jump back to continue processing
 
 ; ======================================================
 ; MESSAGE SYSTEM POINTER TABLE (36a5-3711)
