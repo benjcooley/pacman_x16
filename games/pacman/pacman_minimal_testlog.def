@@ -1,0 +1,13 @@
+{
+  "info": {
+    "1": "System initialized",
+    "2": "Program started",
+    "20": "Basic test complete"
+  },
+  "warning": {
+    "1": "Low memory warning: %1 bytes remaining"
+  },
+  "error": {
+    "1": "Memory allocation failed"
+  }
+}

@@ -189,6 +189,49 @@ make execute-plan
 - **Music**: Faithful melody and rhythm reproduction
 - **Audio Cues**: Proper spatial and temporal audio
 
+## Reference Fidelity Method
+
+To ensure high fidelity with the original arcade game (source of truth: `games/pacman/reference/pacman_z80_annotated.asm`), we follow this process:
+
+- **Subsystem map (ROM → X16)**
+  - **Command buffer/system**: ROM uses RST #28 queue processed at 0x238D with jump table at 0x23A8. X16 build executes subsystems directly per frame in `game_update` without a queue. Target: preserve ROM call ordering where it affects results (movement → collision → scoring → UI → audio).
+  - **State machine**: ROM main state at 0x03C8 (attract, start, level start, gameplay, death, level complete, game over). X16 uses `game_state` with `update_attract`, `update_playing`, death and gameover handlers. Target: align transitions and freezes (READY, death, round-won).
+  - **Ghost AI**: ROM per-ghost targeting/avoidance and scatter/chase via commands 0x08–0x0F and routines ~0x1BC0–0x1EE0. X16 implements dossier-accurate targets including Pinky up-quirk and Inky vector; intersection choice priority U,L,D,R with reverse disallowed except schedule reversals. Target: match target-tile math and intersection rules.
+  - **Scatter/Chase schedule**: ROM timers at ~0x13DD etc. X16 `game_scatter_chase_phase` implements 7/20, 7/20, 5/20, 5/∞ (per level rules). Target: verify phase boundaries and reversal triggers.
+  - **Ghost release (house)**: ROM mixes dot-limits and timers per ghost at ~0x101F–0x10B4. X16 has per-ghost `ghost_dot_limit` plus timed fallback; Pinky timer-based. Target: audit per-level limits/timers to ROM.
+  - **Frightened mode**: ROM power-pellet system ~0x0AC3; blink timings and scoring chain. X16 sets freeze durations (dot=1, pill=3), frightened timer and chain popups 200/400/800/1600. Target: finalize frightened duration/slowdown, blink cadence, and reverse-on-enter.
+  - **Fruit**: ROM spawn/timeout and scoring around 0x19CD.. and command 0x09. X16 spawns at 70/170 dots, 10s timeout, correct sprite and score popup. Target: confirm per-level fruit type and visibility rules.
+  - **RNG**: ROM LCG at 0x2A23 (next = current*5+1 mod 8192). X16 uses `random_byte` for frightened randomness. Target: switch to ROM-equivalent LCG for path tie-breaks.
+  - **Self-test & service**: ROM ROM/RAM/DIP tests 0x3031..0x32C4+ and service loop. X16 has cosmetic self-test only. Target: keep minimal cosmetic version.
+  - **Attract/demo & intermissions**: ROM attract handler at 0x03DC and scripted demo/interstitial system ~0x21C1+. X16: attract checks start only. Target: add demo playback and three intermissions (coffee breaks) via a small script interpreter.
+
+- **Verification (per-commit quick checks)**
+  - Log per-frame trace: tick, Pac-Man tile/dir, each ghost tile/dir/state, scatter/chase phase, frightened timer, Elroy stage, dots_remaining, fruit state, siren stage.
+  - Deterministic input: enable scripted input (seeded), compare traces between builds when changing subsystems.
+  - Golden scenarios: start-of-round first 10 seconds, first energizer sequence, first fruit window, first death, round completion hold.
+
+- **Acceptance criteria (per subsystem)**
+  - Movement and AI decisions match ROM rules at intersections, including red-zone and door rules.
+  - Timers/schedules (scatter/chase, frightened, releases, siren stages) match documented boundaries.
+  - Scoring and popups (dots, pills, ghosts chain, fruit) correct and timed despawn.
+  - Attract/demo and intermissions reproduce original sequences (post-implementation).
+
+### Command System Map (ROM IDs → code locations)
+
+- CMD_01_GAME_STATE_TICK: `games/pacman/pacman_x16.asm` → dispatcher `qh_01` (seeds per-frame commands)
+- CMD_06_INPUT_PROCESS: `pacman_x16.asm` → `cmd_06_input_process` (near input/game loop)
+- CMD_07_SCORE_DISPLAY_UPDATE: `pacman_x16.asm` → `cmd_07_score_display_update` (near UI code)
+- CMD_09_FRUIT_CONTROL: `pacman_x16.asm` → `cmd_09_fruit_control` (near UI/fruit code)
+- CMD_0A_PELLET_CONSUMPTION: `pacman_x16.asm` → `cmd_0A_pellet_consumption` (near pellet helpers)
+- CMD_0C..0F_GHOST*_SCATTER_TARGET: `pacman_x16.asm` → ghost AI section (near `ghost_scatter_targets`)
+- CMD_08..0B_GHOST*_OBSTACLE_AVOID: `pacman_x16.asm` → ghost AI section (uses `ghost_obstacle_avoid_common`)
+
+### Tracing (for audits)
+
+- Enable queue trace: define `ENABLE_QUEUE_TRACE` in `pacman_x16.asm`
+- Enable state trace: define `ENABLE_STATE_TRACE` in `pacman_x16.asm`
+- Traces are emitted via the logging interface to the emulator logs.
+
 ## Development Tools
 
 ### Automated Development

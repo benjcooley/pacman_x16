@@ -330,34 +330,40 @@ Pass 1 of 1
 ; 5. Parameter Passing: B register contains parameter byte
 ; 6. Return: Commands return to 238D loop for next command
 ;
-; **JUMP TABLE AT 0x23A8 (32 entries, 2 bytes each):**
-; 0x00: 0x23ED = Display system initialization
-; 0x01: 0x24D7 = Game state management  
+; **JUMP TABLE AT 0x23A8 (32 entries, 2 bytes each) — VERIFIED FROM CODE BYTES:**
+; 0x00: 0x23ED = Display/system init
+; 0x01: 0x24D7 = Game state management
 ; 0x02: 0x2419 = Level/maze management
 ; 0x03: 0x2448 = Sprite system management
 ; 0x04: 0x243D = Sound effect triggers
 ; 0x05: 0x258B = Animation/timing updates
 ; 0x06: 0x260D = Input processing system
-; 0x07: 0x2424 = Score/statistics display
-; 0x08: 0x2698 = Blinky obstacle avoidance
-; 0x09: 0x2630 = Pinky obstacle avoidance  
-; 0x0a: 0x276C = Inky obstacle avoidance
-; 0x0b: 0x27A9 = Clyde obstacle avoidance
-; 0x0c: 0x27F1 = Blinky scatter targeting
-; 0x0d: 0x2824 = Pinky scatter targeting ⚠️ CONTAINS BUG
-; 0x0e: 0x285A = Inky scatter targeting
-; 0x0f: 0x2890 = Clyde scatter targeting
-; [Commands 0x10-0x1F continue pattern for display/system functions]
+; 0x07: 0x2698 = Score/bonus management
+; 0x08: 0x2730 = Sound effect control
+; NOTE: Earlier drafts speculated 0x09/0x0A/0x0B for fruit/pellet systems.
+; Verified enqueue sites in AI confirm 0x08..0x0F are ghost helper IDs.
+; Fruit/pellet systems are primarily handled in the dot-management paths and
+; power-pellet subsystems, not via these ghost helper command IDs.
+; 0x0C: 0x283B = Collision detection
+; 0x0D: 0x2865 = Pinky targeting (contains 4-tile bug)
+; 0x0E: 0x288F = Inky targeting
+; 0x0F: 0x28B9 = Clyde targeting
+; 0x10: 0x280D = Blinky targeting
+; 0x11: 0x26A2 = Ghost movement coordination / memory ops
+; 0x12..0x1F: system/display/state routines (see table literals)
 ;
-; **CONFIRMED GHOST AI COMMANDS:**
-;   0x08 param = Blinky obstacle avoidance
-;   0x09 param = Pinky obstacle avoidance  
-;   0x0a param = Inky obstacle avoidance
-;   0x0b param = Clyde obstacle avoidance
-;   0x0c param = Blinky scatter targeting (direct aggressive)
-;   0x0d param = Pinky scatter targeting (4-tile ambush) ⚠️ CONTAINS BUG
-;   0x0e param = Inky scatter targeting (complex algorithm)  
-;   0x0f param = Clyde scatter targeting (shy behavior)
+; NOTE: Ghost scatter/avoid RST #28 producer sites confirm:
+;   0x08..0x0B = obstacle avoidance (Blinky..Clyde)
+;   0x0C..0x0F = scatter targeting (Blinky..Clyde)
+; See AI routines around 0x1C05, 0x1C16, 0x1DB3, 0x1E8A, 0x1E9B for literal ID bytes.
+
+; ADDITIONAL NOTE: Dot/Pellet and Power-Pellet systems
+; The main gameplay loop calls the dot/pellet management directly:
+;   1044: cd0618    call #1806   ; dot management
+;   2130/2133/2186/2189/2237/223a: repeated calls to #1806 in state paths
+; Power pellet timing/duration is handled via level-specific routines at 0x0a2c+.
+; We did not find definitive RST #28 producers for fruit/pellet in gameplay; treat
+; these as non-queued subsystems unless a concrete enqueue site is identified.
 ;
 ; **WHY TWO BYTES?**
 ; Command byte (0x00-0x1F) indexes jump table, parameter passed in B register
@@ -3931,7 +3937,7 @@ Pass 1 of 1
 ; C_PSEUDO:   check_dot_collision();
 ; C_PSEUDO: }
 ; ALGORITHM: Main entry point for dot collision detection system
-100b  ef        rst     #28		; Call system routine at 0x0028
+100b  ef        rst     #28		; Queue via RST #28 (system/display path, NOT dot/collision)
 100c  1c        inc     e		; Increment E register
 100d  9b        sbc     a,e		; Subtract E from A with carry
 100e  3a004e    ld      a,(#4e00)	; Get attract mode flag
@@ -3943,7 +3949,7 @@ Pass 1 of 1
 ; C_PSEUDO:   call_system_routine(0x001c, 0xa2);  // System collision check
 ; C_PSEUDO: }
 ; ALGORITHM: Calls system routine for detailed collision processing
-1013  ef        rst     #28		; Call system routine at 0x0028
+1013  ef        rst     #28		; Queue via RST #28 (system/display path, NOT dot/collision)
 1014  1c        inc     e		; Increment E register  
 1015  a2        and     d		; AND A with D register
 1016  c9        ret     

@@ -120,8 +120,10 @@
 ; - [ ] Startup self‑test visual/sound simulation
 ; - [ ] Optional level 255 kill‑screen behavior
 
-; Include CONSTANTS
+; Include constants first
 .include "core/x16_constants.inc"
+.include "core/x16_system.asm"
+.include "core/vera_graphics.asm"
 .include "pacman_constants.inc"
 
 ; ==============================================================================
@@ -272,6 +274,30 @@ ASM_LOG_ERROR      = $9F64   ; error trigger (message ID in A)
 .endif
 .endmacro
 
+; ==============================================================================
+; PROGRAM HEADER
+; ==============================================================================
+
+.segment "STARTUP"
+.segment "INIT"
+.segment "ONCE"
+
+; Emit PRG load address and BASIC header into expected linker segments
+.segment "LOADADDR"
+    .word $0801
+
+.segment "EXEHDR"
+    ; 12-byte BASIC stub for SYS2063 (matches simple.cfg MAIN start at $080F)
+    .byte $0C, $08, $0A, $00, $9E, $20, $32, $30, $36, $33, $00, $00
+
+.segment "CODE"
+
+; Include framework modules
+; Early includes already present above
+
+    ; CPU type
+.setcpu "65C02"
+
 ; VERA PSG VRAM base (for audio register writes via VERA address window)
 VERA_PSG_BASE = $1F9C0
 
@@ -402,9 +428,6 @@ DISPLAY_TILES_X = 28       ; 28x36 tile playfield
 DISPLAY_TILES_Y = 36
 DISPLAY_PIXELS_X = 224     ; 28 * 8 pixels
 DISPLAY_PIXELS_Y = 288     ; 36 * 8 pixels
-
-; Move data tables to RODATA segment so they don't interfere with CODE entry point
-.segment "RODATA"
 
 ; Fruit tile and color tables (background tiles)
 fruit_tile_by_id:
@@ -618,29 +641,7 @@ CMD_14_POWER_PELLET_EFFECTS       = $14
     jsr queue_post
 .endmacro
 
-
-
-
-; ==============================================================================
-; PROGRAM HEADER
-; ==============================================================================
-
-.segment "STARTUP"
-.segment "INIT"
-.segment "ONCE"
-
-; Emit PRG load address and BASIC header into expected linker segments
-.segment "LOADADDR"
-    .word $0801
-
-.segment "EXEHDR"
-    ; 12-byte BASIC stub for SYS2063 (matches simple.cfg MAIN start at $080F)
-    .byte $0C, $08, $0A, $00, $9E, $20, $32, $30, $36, $33, $00, $00
-
 .segment "CODE"
-
-; CPU type
-.setcpu "65C02"
 
 ; Program entry point - MUST BE FIRST in CODE segment
 main:
@@ -658,10 +659,6 @@ main:
     ; TODO: Implement framework functions and restore full game logic
 startup_loop:
     jmp startup_loop
-
-; Include framework files AFTER main: entry point to prevent data tables from being placed before executable code
-.include "core/x16_system.asm"
-.include "core/vera_graphics.asm"
 
 ; ==============================================================================
 ; MAIN GAME LOOP

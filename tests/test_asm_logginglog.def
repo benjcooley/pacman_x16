@@ -1,0 +1,29 @@
+{
+  "info": {
+    "1": "System initialized",
+    "2": "Loading data from address %3",
+    "3": "Player position: X=%1, Y=%2",
+    "4": "Score updated to %3",
+    "5": "Level %1 completed",
+    "6": "Test message ID 6",
+    "7": "Test message ID 7",
+    "8": "Test message ID 8",
+    "9": "Test message ID 9",
+    "10": "Test message ID 10",
+    "99": "Undefined message test (ID 99)"
+  },
+  "warning": {
+    "1": "Low memory warning: %1 bytes remaining",
+    "2": "Invalid input detected: %1",
+    "3": "Collision detected at %1, %2",
+    "4": "Warning message ID 4",
+    "5": "Warning message ID 5"
+  },
+  "error": {
+    "1": "Memory allocation failed",
+    "2": "Invalid address access: %3",
+    "3": "System error code %1",
+    "4": "Error message ID 4",
+    "5": "Error message ID 5"
+  }
+}
