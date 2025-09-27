@@ -165,14 +165,16 @@ ASM_LOG_WARNING    = $9F63   ; warning trigger (message ID in A)
 ASM_LOG_ERROR      = $9F64   ; error trigger (message ID in A)
 
 .macro LOG_INFO msgId
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
+    pha
     lda #msgId
     sta ASM_LOG_INFO
+    pla
 .endif
 .endmacro
 
 .macro LOG_INFO1 msgId, p1
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
     lda #p1
     sta ASM_LOG_PARAM1
     lda #msgId
@@ -181,7 +183,7 @@ ASM_LOG_ERROR      = $9F64   ; error trigger (message ID in A)
 .endmacro
 
 .macro LOG_INFO2 msgId, p1, p2
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
     lda #p1
     sta ASM_LOG_PARAM1
     lda #p2
@@ -192,14 +194,14 @@ ASM_LOG_ERROR      = $9F64   ; error trigger (message ID in A)
 .endmacro
 
 .macro LOG_WARN msgId
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
     lda #msgId
     sta ASM_LOG_WARNING
 .endif
 .endmacro
 
 .macro LOG_ERR msgId
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
     lda #msgId
     sta ASM_LOG_ERROR
 .endif
@@ -207,7 +209,7 @@ ASM_LOG_ERROR      = $9F64   ; error trigger (message ID in A)
 
 ; Log 16-bit value (word) using param1=lo, param2=hi then trigger msgId
 .macro LOG_INFO_WORD msgId, wordLo, wordHi
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
     lda #wordLo
     sta ASM_LOG_PARAM1
     lda #wordHi
@@ -220,7 +222,7 @@ ASM_LOG_ERROR      = $9F64   ; error trigger (message ID in A)
 ; Convenience macros for logging dynamic register/memory values
 ; LOG_A: param1 := A, emit info(msgId)
 .macro LOG_A msgId
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
     sta ASM_LOG_PARAM1
     lda #msgId
     sta ASM_LOG_INFO
@@ -229,7 +231,7 @@ ASM_LOG_ERROR      = $9F64   ; error trigger (message ID in A)
 
 ; LOG_AX: param1 := A, param2 := X, emit info(msgId)
 .macro LOG_AX msgId
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
     sta ASM_LOG_PARAM1
     txa
     sta ASM_LOG_PARAM2
@@ -240,7 +242,7 @@ ASM_LOG_ERROR      = $9F64   ; error trigger (message ID in A)
 
 ; LOG_P1: param1 := [addr], emit info(msgId)
 .macro LOG_P1 msgId, addr
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
     lda addr
     sta ASM_LOG_PARAM1
     lda #msgId
@@ -250,7 +252,7 @@ ASM_LOG_ERROR      = $9F64   ; error trigger (message ID in A)
 
 ; LOG_P2: param1 := [addr1], param2 := [addr2], emit info(msgId)
 .macro LOG_P2 msgId, addr1, addr2
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
     lda addr1
     sta ASM_LOG_PARAM1
     lda addr2
@@ -262,7 +264,7 @@ ASM_LOG_ERROR      = $9F64   ; error trigger (message ID in A)
 
 ; LOG_WORD_P: param1 := [wordLo], param2 := [wordHi], emit info(msgId)
 .macro LOG_WORD_P msgId, wordLoAddr, wordHiAddr
-.ifdef ENABLE_LOGGING
+.if ENABLE_LOGGING
     lda wordLoAddr
     sta ASM_LOG_PARAM1
     lda wordHiAddr
@@ -645,8 +647,7 @@ CMD_14_POWER_PELLET_EFFECTS       = $14
 ; Program entry point - MUST BE FIRST in CODE segment
 main:
     ; Startup logging to verify program starts correctly
-    lda #1                  ; "System initialized"
-    sta ASM_LOG_INFO
+    LOG_INFO 1
     
     lda #2                  ; "Program started" 
     sta ASM_LOG_INFO
@@ -654,10 +655,11 @@ main:
     lda #10                 ; "Pacman: Initializing screen layout test"
     sta ASM_LOG_INFO
     
-    ; For now, just loop infinitely to verify startup works
-    ; TODO: Implement framework functions and restore full game logic
-startup_loop:
-    jmp startup_loop
+    ; Test change - add another startup message
+    lda #3                  ; "System ready for game initialization"
+    sta ASM_LOG_INFO
+    
+    jmp game_start
 
 ; Include framework files AFTER main: entry point to prevent data tables from being placed before executable code
 .include "core/x16_system.asm"

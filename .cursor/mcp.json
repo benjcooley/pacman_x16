@@ -6,7 +6,12 @@
       "env": {
         "X16_PORT": "9090",
         "X16_LOG_LEVEL": "INFO",
-        "X16_DEBUG": "0"
+        "X16_DEBUG": "0",
+        "X16_FSROOT": "/Users/benjamincooley/projects/pacman_x16/build/pacman",
+        "X16_STARTIN": "/Users/benjamincooley/projects/pacman_x16/build/pacman",
+        "X16_MAKE_COMMAND": "make GAME=pacman",
+        "X16_MAKE_DIR": "/Users/benjamincooley/projects/pacman_x16",
+        "X16_RUN_TARGET": "pacman.prg"
       }
     }
   }

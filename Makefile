@@ -31,6 +31,10 @@ FRAMEWORK_DIR = framework
 BUILD_DIR = build
 TOOLS_DIR = tools
 BIN_DIR = bin
+LOG_DIR = $(BIN_DIR)/logs
+LOG_FILE = $(LOG_DIR)/x16emu_log.txt
+ABS_LOG_FILE := $(abspath $(LOG_FILE))
+TIMEOUT ?= 10
 
 # Source files
 GAME_MAIN = $(GAME_DIR)/$(GAME)_x16.asm
@@ -74,24 +78,88 @@ $(BUILD_DIR)/$(GAME)_data.o: $(GAME_DATA)
 # UTILITY TARGETS
 # ==============================================================================
 
-# Build and run the game
+# Build and run the game - both -prg and BASIC LOAD work consistently
 run: $(PROGRAM)
 	@if [ ! -f "$(EMULATOR)" ]; then \
 		echo "❌ Emulator not found at $(EMULATOR)"; \
 		echo "💡 Run 'make emulator' first to build the emulator to bin/"; \
 		exit 1; \
 	fi
+	@# Create game-specific build directory
+	@mkdir -p "$(BUILD_DIR)/$(GAME)/logs"
+	@mkdir -p "$(BUILD_DIR)/$(GAME)/screenshots"
+	@# Copy game executable to game-specific build directory  
+	@cp "$(PROGRAM)" "$(BUILD_DIR)/$(GAME)/$(GAME).prg"
 	@# Copy game-specific logging file if it exists
+	@if [ -f "$(GAME_DIR)/$(GAME)log.def" ]; then \
+		cp "$(GAME_DIR)/$(GAME)log.def" "$(BUILD_DIR)/$(GAME)/$(GAME)log.def"; \
+		echo "📋 Using game-specific logging: $(GAME_DIR)/$(GAME)log.def"; \
+	else \
+		echo "📋 No game-specific logging found, using generic"; \
+		cp "logging.def" "$(BUILD_DIR)/$(GAME)/$(GAME)log.def" 2>/dev/null || true; \
+	fi
+	@echo "🎮 Running $(GAME) with clean filesystem structure"
+	@echo "   → Game sandbox: $(BUILD_DIR)/$(GAME)/"
+	@echo "   → Both -prg and BASIC LOAD\"$(GAME).PRG\",8,1 work"
+	@echo "   → Logs: $(BUILD_DIR)/$(GAME)/logs/"
+	$(EMULATOR) -fsroot "$(BUILD_DIR)/$(GAME)" -startin "$(BUILD_DIR)/$(GAME)" \
+		-log-file "$(BUILD_DIR)/$(GAME)/logs/x16emu_log.txt" \
+		-prg "$(GAME).prg" -run
+
+# Build and run while tailing emulator log file
+.PHONY: run-log tail-log run-log-seconds
+run-log: $(PROGRAM)
+	@if [ ! -f "$(EMULATOR)" ]; then \
+		echo "❌ Emulator not found at $(EMULATOR)"; \
+		echo "💡 Run 'make emulator' first to build the emulator to bin/"; \
+		exit 1; \
+	fi
+	@# Create game-specific build directory
+	@mkdir -p "$(BUILD_DIR)/$(GAME)/logs"
+	@mkdir -p "$(BUILD_DIR)/$(GAME)/screenshots"
+	@# Copy game executable and logging config
+	@cp "$(PROGRAM)" "$(BUILD_DIR)/$(GAME)/$(GAME).prg"
+	@if [ -f "$(GAME_DIR)/$(GAME)log.def" ]; then \
+		cp "$(GAME_DIR)/$(GAME)log.def" "$(BUILD_DIR)/$(GAME)/$(GAME)log.def"; \
+		echo "📋 Using game-specific logging: $(GAME_DIR)/$(GAME)log.def"; \
+	else \
+		echo "📋 No game-specific logging found, using generic"; \
+		cp "logging.def" "$(BUILD_DIR)/$(GAME)/$(GAME)log.def" 2>/dev/null || true; \
+	fi
+	@GAME_LOG_FILE="$(BUILD_DIR)/$(GAME)/logs/x16emu_log.txt"; \
+	: > "$$GAME_LOG_FILE"; \
+	echo "📝 Tailing: $$GAME_LOG_FILE"; \
+	echo "🎮 Game sandbox: $(BUILD_DIR)/$(GAME)/"; \
+	TAIL_CMD="tail -n +1 -f \"$$GAME_LOG_FILE\""; \
+	sh -c "$$TAIL_CMD & TAIL_PID=\$$!; trap 'kill \$$TAIL_PID 2>/dev/null || true' EXIT INT TERM; \"$(EMULATOR)\" -fsroot \"$(BUILD_DIR)/$(GAME)\" -startin \"$(BUILD_DIR)/$(GAME)\" -log-file \"$$GAME_LOG_FILE\" -prg \"$(GAME).prg\" -run; kill \$$TAIL_PID 2>/dev/null || true" || true
+
+# Just tail the current game's emulator log
+tail-log:
+	@mkdir -p "$(BUILD_DIR)/$(GAME)/logs"
+	@GAME_LOG_FILE="$(BUILD_DIR)/$(GAME)/logs/x16emu_log.txt"; \
+	touch "$$GAME_LOG_FILE"; \
+	echo "📝 Tailing: $$GAME_LOG_FILE (Ctrl-C to stop)"; \
+	tail -n +1 -f "$$GAME_LOG_FILE"
+
+# Build, run, and tail logs for TIMEOUT seconds, then auto-terminate
+run-log-seconds: $(PROGRAM)
+	@if [ ! -f "$(EMULATOR)" ]; then \
+		echo "❌ Emulator not found at $(EMULATOR)"; \
+		echo "💡 Run 'make emulator' first to build the emulator to bin/"; \
+		exit 1; \
+	fi
+	@mkdir -p "$(LOG_DIR)"
 	@if [ -f "$(GAME_DIR)/$(GAME)log.def" ]; then \
 		cp "$(GAME_DIR)/$(GAME)log.def" "$(BIN_DIR)/$(GAME)log.def"; \
 		echo "📋 Using game-specific logging: $(GAME_DIR)/$(GAME)log.def"; \
 		echo "   → Copied to: $(BIN_DIR)/$(GAME)log.def"; \
-		echo "   → Emulator will auto-detect this file based on $(PROGRAM)"; \
 	else \
 		echo "📋 No game-specific logging found at $(GAME_DIR)/$(GAME)log.def"; \
 		echo "   → Emulator will fall back to generic logging.def"; \
 	fi
-	$(EMULATOR) -prg $(PROGRAM) -run
+	@: > "$(ABS_LOG_FILE)"
+	@echo "🕒 Running for $(TIMEOUT)s | Log: $(ABS_LOG_FILE)"
+	@sh -c 'tail -n +1 -f "$(ABS_LOG_FILE)" & TAIL_PID=$$!; "$(EMULATOR)" -prg "$(PROGRAM)" -run -log-file "$(ABS_LOG_FILE)" & EMU_PID=$$!; sleep $(TIMEOUT); kill $$EMU_PID 2>/dev/null || true; kill $$TAIL_PID 2>/dev/null || true; wait $$EMU_PID 2>/dev/null || true'
 
 # Build and run with GIF recording for LLM analysis
 run-gif: $(PROGRAM)
@@ -172,6 +240,7 @@ emulator: $(BIN_DIR)
 	cp emulator/rom.bin $(BIN_DIR)/
 	cp emulator/makecart $(BIN_DIR)/
 	cp logging.def $(BIN_DIR)/
+	mkdir -p $(LOG_DIR)
 	mkdir -p $(BIN_DIR)/screenshots
 	@echo "Emulator and MCP server built to $(BIN_DIR)/"
 	@echo "Files copied: x16emu, mcp, rom.bin, makecart, logging.def"
@@ -194,6 +263,7 @@ rebuild-emulator: $(BIN_DIR)
 	cp emulator/rom.bin $(BIN_DIR)/
 	cp emulator/makecart $(BIN_DIR)/
 	cp logging.def $(BIN_DIR)/
+	mkdir -p $(LOG_DIR)
 	mkdir -p $(BIN_DIR)/screenshots
 	@echo "Emulator and MCP server rebuilt to $(BIN_DIR)/"
 	@echo "Files copied: x16emu, mcp, rom.bin, makecart, logging.def"
@@ -259,6 +329,10 @@ help:
 	@echo "  make analyze            - Analyze progress vs reference"
 	@echo "  make execute-plan       - Run phase execution plan"
 	@echo ""
+	@echo "Testing:"
+	@echo "  make test-mcp           - Run MCP protocol compliance tests"
+	@echo "  make test-mcp-full      - Run full MCP test suite with dependencies"
+	@echo ""
 	@echo "Available Games:"
 	@echo "  pacman                  - Pac-Man recreation"
 	@echo ""
@@ -267,6 +341,28 @@ help:
 	@echo "  BUILD_DIR = $(BUILD_DIR)"
 	@echo "  BIN_DIR = $(BIN_DIR)"
 	@echo "  EMULATOR = $(EMULATOR)"
+
+# ==============================================================================
+# TESTING TARGETS
+# ==============================================================================
+
+# MCP Protocol Compliance Tests
+.PHONY: test-mcp test-mcp-full
+
+test-mcp: $(BIN_DIR)/mcp
+	@echo "🧪 Running MCP Protocol Compliance Tests"
+	@echo "========================================"
+	python3 tests/run_mcp_tests.py
+
+test-mcp-full: $(BIN_DIR)/mcp
+	@echo "🧪 Running Full MCP Test Suite"
+	@echo "=============================="
+	@echo "📋 Checking Python dependencies..."
+	@python3 -c "import requests, jsonschema" 2>/dev/null || \
+		(echo "❌ Missing Python dependencies. Install with: pip install requests jsonschema" && exit 1)
+	@echo "✓ Python dependencies OK"
+	@echo ""
+	python3 tests/mcp_protocol_tests.py
 
 # ==============================================================================
 # DEPENDENCIES
